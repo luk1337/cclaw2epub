@@ -332,14 +332,12 @@ class Book:
                 soup = BeautifulSoup(chapter.html, features='html.parser')
                 entry_content = soup.find('div', attrs={'class': 'entry-content'})
 
-                # Remove Discord/Patreon advertisement
+                # Remove all content prior to chapter name
                 for p in entry_content.find_all('p'):
-                    if p.text in [
-                        'If you like our work, please follow us on our social media, join our discord and consider supporting us on Patreon:',
-                        'https://discord.gg/e4BJxX6 https://www.patreon.com/CClawTrans',
-                        'Join the discord server: https://discord.gg/KBwsfYEh3H',
-                    ]:
+                    if not p.find_previous_sibling('h2', attrs={'class', 'wp-block-heading'}):
                         p.decompose()
+                    else:
+                        break
 
                 # Remove unwanted elements
                 if wordads_ad_wrapper := entry_content.find('div', attrs={'class': 'wordads-ad-wrapper'}):
