@@ -326,8 +326,38 @@ class Book:
                 chapters=toc.chapters,
             ))
 
+    def write_illustrations(self, chapter: Chapter):
+        with open(os.path.join(self.base, 'OEBPS', 'Text', f'{chapter.name}.xhtml'), 'wt+') as file:
+            images = []
+
+            for img in BeautifulSoup(chapter.html, features='html.parser').find_all(attrs={'class': 'wp-block-image'}):
+                images.append(img.find('img').attrs['data-orig-file'])
+
+            file.write(jinja2.Environment().from_string(inspect.cleandoc('''
+                <?xml version="1.0" encoding="utf-8"?>
+                <!DOCTYPE html>
+                <html xmlns="http://www.w3.org/1999/xhtml">
+                  <head>
+                    <title>{{ chapter.name }}</title>
+                    <link href="../Styles/stylesheet.css" type="text/css" rel="stylesheet"/>
+                  </head>
+                  <body>
+                    {%- for image in images %}
+                      <p><img src="../Images/{{ image.split('/')[-1] }}"/></p>
+                    {%- endfor %}
+                  </body>
+                </html>
+            ''')).render(
+                chapter=chapter,
+                images=images,
+            ))
+
     def write_chapters(self, chapters: list):
         for chapter in chapters:
+            if chapter.name == 'Illustrations':
+                self.write_illustrations(chapter)
+                continue
+
             with open(os.path.join(self.base, 'OEBPS', 'Text', f'{chapter.name}.xhtml'), 'wt+') as file:
                 soup = BeautifulSoup(chapter.html, features='html.parser')
                 entry_content = soup.find('div', attrs={'class': 'entry-content'})
