@@ -318,13 +318,15 @@ class Book:
                         p.decompose()
 
                 # Remove unwanted elements
-                entry_content.find('div', attrs={'class': 'wordads-ad-wrapper'}).decompose()
+                if wordads_ad_wrapper := entry_content.find('div', attrs={'class': 'wordads-ad-wrapper'}):
+                    wordads_ad_wrapper.decompose()
                 entry_content.find('div', attrs={'class': 'sharedaddy'}).decompose()
                 [x.decompose() for x in entry_content.find_all('div', attrs={'class': 'wp-block-spacer'})]
                 if hr := entry_content.find('hr'):
                     hr.decompose()
                 entry_content.find('script').decompose()
-                entry_content.find('style').decompose()
+                if style := entry_content.find('style'):
+                    style.decompose()
 
                 # Remap images
                 for image in entry_content.find_all('img'):
