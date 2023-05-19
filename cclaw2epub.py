@@ -3,6 +3,7 @@ import argparse
 import inspect
 import os
 import shutil
+import sys
 import tempfile
 from dataclasses import dataclass
 from datetime import datetime
@@ -174,20 +175,43 @@ class Book:
             file.write('application/epub+zip')
 
     @staticmethod
-    def fetch_toc(url: str, author: str):
+    def fetch_toc(url: str, author: str, volume: int):
         soup = BeautifulSoup(requests.get(url).text, features='html.parser')
 
         title = soup.find('h1', attrs={'class': 'entry-title'}).text[:-len(' ToC')]
+        if volume:
+            title += f', Vol. {volume}'
         cover = soup.find('div', attrs={'class': 'wp-block-image'}).find('img')
         published_time = datetime.fromisoformat(
             soup.find('meta', attrs={'property': 'article:published_time'}).attrs['content']
         ).strftime('%Y-%m-%dT%H:%M:%SZ')
         images = [cover.attrs['data-orig-file']]
 
+        volumes = list(filter(lambda x: x.text.startswith('Volume'),
+                              soup.find_all('h2', attrs={'class': 'wp-block-heading has-text-align-center'})))
+        if volumes and not volume:
+            sys.exit('Multi volume series detected, please use --volume to select the volume you want to use.')
+
         chapters = []
 
         for chapter in [x.find('a') for x in soup.find_all('p', attrs={'class': 'has-text-align-center'})]:
-            html = requests.get(chapter.attrs['href']).text
+            href = chapter.attrs['href']
+
+            if not href.startswith('https://cclawtranslations.home.blog/'):
+                continue
+
+            if volume:
+                chapter_volume = chapter.parent.find_previous_sibling('h2', attrs={
+                    'class': 'wp-block-heading has-text-align-center'
+                }).text.split()[-1]
+
+                if chapter_volume < volume:
+                    continue
+
+                if chapter_volume > volume:
+                    break
+
+            html = requests.get(href).text
 
             for img in BeautifulSoup(html, features='html.parser').find_all(attrs={'class': 'wp-block-image'}):
                 images.append(img.find('img').attrs['data-orig-file'])
@@ -413,10 +437,10 @@ class Book:
         shutil.move(f'{out}.zip', out)
 
     @staticmethod
-    def build(toc_url: str, author: str, out: str):
+    def build(toc_url: str, author: str, out: str, volume: int):
         with tempfile.TemporaryDirectory() as tmp_dir:
             book = Book(tmp_dir)
-            toc = book.fetch_toc(toc_url, author)
+            toc = book.fetch_toc(toc_url, author, volume)
 
             book.create_folder_structure()
             book.fetch_images(toc.images)
@@ -431,7 +455,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Build epub file from CClaw Translations ToC')
     parser.add_argument('-a', '--author', help='Book author', required=True)
     parser.add_argument('-t', '--toc', help='URL to CClaw ToC', required=True)
+    parser.add_argument('-v', '--volume', help='Volume')
     parser.add_argument('out', help='Output epub path')
     args = parser.parse_args()
 
-    Book.build(toc_url=args.toc, author=args.author, out=args.out)
+    Book.build(toc_url=args.toc, author=args.author, volume=args.volume, out=args.out)
