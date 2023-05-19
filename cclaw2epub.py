@@ -395,7 +395,7 @@ class Book:
                     <meta refines="#creator" property="role">aut</meta>
                     <dc:identifier id="BookId">{{ toc.url }}</dc:identifier>
                     <meta property="dcterms:modified">{{ toc.published_time }} </meta>
-                    <meta name="cover" content="image0" />
+                    <meta name="cover" content="image1" />
                     <meta refines="#BookId" property="identifier-type">URI</meta>
                   </metadata>
                   <manifest>
