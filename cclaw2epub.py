@@ -181,7 +181,7 @@ class Book:
         title = soup.find('h1', attrs={'class': 'entry-title'}).text[:-len(' ToC')]
         if volume:
             title += f', Vol. {volume}'
-        cover = soup.find('div', attrs={'class': 'wp-block-image'}).find('img')
+        cover = soup.find_all('div', attrs={'class': 'wp-block-image'})[(volume or 1) - 1].find('img')
         published_time = datetime.fromisoformat(
             soup.find('meta', attrs={'property': 'article:published_time'}).attrs['content']
         ).strftime('%Y-%m-%dT%H:%M:%SZ')
