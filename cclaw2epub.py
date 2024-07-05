@@ -201,9 +201,9 @@ class Book:
                 continue
 
             if volume:
-                chapter_volume = chapter.parent.find_previous_sibling('h2', attrs={
+                chapter_volume = int(chapter.parent.find_previous_sibling('h2', attrs={
                     'class': 'wp-block-heading has-text-align-center'
-                }).text.split()[-1]
+                }).text.split()[-1])
 
                 if chapter_volume < volume:
                     continue
@@ -483,7 +483,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Build epub file from CClaw Translations ToC')
     parser.add_argument('-a', '--author', help='Book author', required=True)
     parser.add_argument('-t', '--toc', help='URL to CClaw ToC', required=True)
-    parser.add_argument('-v', '--volume', help='Volume')
+    parser.add_argument('-v', '--volume', help='Volume', type=int)
     parser.add_argument('out', help='Output epub path')
     args = parser.parse_args()
 
