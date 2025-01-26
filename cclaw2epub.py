@@ -203,7 +203,7 @@ class Book:
             if volume:
                 chapter_volume = int(chapter.parent.find_previous_sibling('h2', attrs={
                     'class': 'wp-block-heading has-text-align-center'
-                }).text.split()[-1])
+                }).text.split()[1])
 
                 if chapter_volume < volume:
                     continue
